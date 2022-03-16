@@ -1,0 +1,171 @@
+#ALUminium V1.1 operations
+#https://github.com/JonathSpirit/ALUminium
+
+set + 0x00 #Addition
+set - 0x01 #Substraction
+
+set & 0x02 #AND Bitwise
+set | 0x03 #OR Bitwise
+set ^ 0x04 #XOR Bitwise
+set ~ 0x05 #INV Bitwise
+
+set && 0x06 #AND Logical
+set || 0x07 #OR Logical
+set ^^ 0x08 #XOR Logical
+set !  0x09 #INV Logical
+
+set << 0x0A #Shift to the left
+set >> 0x0B #Shift to the right
+
+set >  0x0C #Strict bigger than
+set <  0x0D #Strict smaller than
+set >= 0x0E #Bigger than
+set <= 0x0F #Smaller than
+set == 0x10 #Equal
+
+set * 0x11  #Multiplication
+
+set C2 0x12  #2Complement
+set <>  0x13 #Rotate
+set <<> 0x14 #Rotate to the left
+set <>> 0x15 #Rotate to the right
+
+set A_OPL 0x16 #Write to the accumulator left/right and return operation left
+set A_OPR 0x17 #Write to the accumulator left/right and return operation right
+set OP_AL 0x18 #Write to the operation left/right and return accumulator left
+set OP_AR 0x19 #Write to the operation left/right and return accumulator right
+
+#GCM V5.x Peripherals
+#https://github.com/JonathSpirit/GCM
+
+set PSLOT_0 0x00
+set PSLOT_1 0x01
+set PSLOT_2 0x02
+set PSLOT_3 0x03
+
+set PMEM_CTRL 0x04
+set PSRC_CTRL 0x05
+
+set PCLK_CTRL 0x06
+set PPCLK_CTRL 0x07
+
+#GP8B V5.x writable bus
+#https://github.com/JonathSpirit/GP8B
+
+set BWRITE1 0x01
+set BWRITE2 0x02
+set BSPICFG 0x03
+set BSPI    0x04
+set BOPLEFT  0x05
+set BOPRIGHT 0x06
+
+#------------------------------------------------
+#[
+pool BUFFER 256 0]#
+
+var $funcRet0
+var $funcRet1
+var $funcRet2
+
+set _LIB_PUART_SLOT 0x00
+set _LIB_PUART_RET0 $funcRet0
+set _LIB_PUART_RET1 $funcRet1
+set _LIB_PUART_RET2 $funcRet2
+import libraries/peripherals/uart/lib_puart_A1_1 
+import libraries/math/lib_math_int_1_0
+
+pool HEX_VALUE 16 0
+affect HEX_VALUE 0 '0' '1' '2' '3' '4' '5' '6' '7' '8' '9' 'A' 'B' 'C' 'D' 'E' 'F'
+
+call PUART_chooseUART
+call PUART_clearFlags
+
+definition SendResultInHex
+    brut 0x0C 0x00 #BRAMADD2_CLK <SRCVALUE>
+    brut 0x6B #BRAMADD1_CLK <OPRESULT>
+    
+    set _PUART_VALUE _ram
+    call PUART_setBufferAndSend
+end_def
+
+var $test_a 2
+
+get $test_a 0
+affect 0
+get $test_a 1
+affect 0
+get $_MINT_16_B:MINT_POOL 0
+affect 1
+get $_MINT_16_B:MINT_POOL 1
+affect 0
+
+get $_MINT_OUT_32:MINT_POOL 0
+affect 0
+get $_MINT_OUT_32:MINT_POOL 1
+affect 0
+get $_MINT_OUT_32:MINT_POOL 2
+affect 0
+get $_MINT_OUT_32:MINT_POOL 3
+affect 0
+
+label loop
+
+#Placing test_a into _MINT_16_A:MINT_POOL
+get $test_a 0
+write BOPLEFT _ram
+get $test_a 1
+write BOPRIGHT _ram
+get $_MINT_16_A:MINT_POOL 0
+select OP A_OPL
+affect _result
+get $_MINT_16_A:MINT_POOL 1
+select OP A_OPR
+affect _result
+
+#Printing number
+get $_MINT_OUT_32:MINT_POOL 1
+do _ram >> 4
+call SendResultInHex
+set _PUART_LABEL "_super1"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 1
+do _ram & 0x0F
+call SendResultInHex
+set _PUART_LABEL "_super2"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 0
+do _ram >> 4
+call SendResultInHex
+set _PUART_LABEL "_super3"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 0
+do _ram & 0x0F
+call SendResultInHex
+set _PUART_LABEL "_super4"
+call PUART_waitTransmitFlag
+
+set _PUART_VALUE 10
+call PUART_setBufferAndSend
+set _PUART_LABEL "_super5"
+call PUART_waitTransmitFlag
+set _PUART_VALUE 13
+call PUART_setBufferAndSend
+set _PUART_LABEL "_super6"
+call PUART_waitTransmitFlag
+
+#Addition
+call MINT_16to32_u_add $_MINT_RET_A_LSB:MINT_POOL $_MINT_RET_A:MINT_POOL $_MINT_RET_A_MSB:MINT_POOL
+
+#Placing result into test_a
+get $_MINT_OUT_32:MINT_POOL 0
+write BOPLEFT _ram
+get $_MINT_OUT_32:MINT_POOL 1
+write BOPRIGHT _ram
+get $test_a 0
+select OP A_OPL
+affect _result
+get $test_a 1
+select OP A_OPR
+affect _result
+
+jump loop

@@ -1,0 +1,156 @@
+###############################################
+# Library for the UART_peripheral_card_A V1.1 #
+# Revision 0                                  #
+#                                             #
+# Created by Guillaume Guillet                #
+# 05.11.2021                                  #
+###############################################
+
+#[ Changelog
+
+Revision 0 :
+    - initial release
+]#
+
+#[ 'set' option
+
+Change the physical slot of the card :
+_LIB_PUART_SLOT
+
+Variable for return address 0 (LSB) :
+_LIB_PUART_RET0
+
+Variable for return address 1 :
+_LIB_PUART_RET1
+
+Variable for return address 2 (MSB) :
+_LIB_PUART_RET2
+]#
+
+#LIB pool
+pool PUART_POOL 0 #Dynamic size, dynamic start address
+var $counter:PUART_POOL
+var $size:PUART_POOL
+var $addressMSB:PUART_POOL
+var $addressLSB:PUART_POOL
+
+#Select the UART peripheral card
+definition PUART_chooseUART
+    select P _LIB_PUART_SLOT
+end_def
+
+#Clear all flags (receive flag and transmit flag)
+definition PUART_clearFlags
+    write BWRITE2 0x03
+    clock P
+end_def
+
+#Clear receive flag
+definition PUART_clearReceiveFlag
+    write BWRITE2 0x01
+    clock P
+end_def
+
+#Clear transmit flag
+definition PUART_clearTransmitFlag
+    write BWRITE2 0x02
+    clock P
+end_def
+
+#Set value in the transmit buffer
+#[ 'set' argument
+
+Value to be sent :
+_PUART_VALUE
+]#
+definition PUART_setTransmitBuffer
+    write BWRITE1 _PUART_VALUE
+    write BWRITE2 0x04
+    clock P
+    
+    unset _PUART_VALUE
+end_def
+
+#Send the value stored in the transmit buffer
+definition PUART_send
+    write BWRITE2 0x08
+    clock P
+end_def
+
+#Set value in the transmit buffer and send it
+#[ 'set' argument
+
+Value to be sent :
+_PUART_VALUE
+]#
+definition PUART_setBufferAndSend
+    call PUART_setTransmitBuffer
+    call PUART_send
+end_def
+
+#Wait the transmit flag to be 1
+#[ 'set' argument
+
+Name of the loop label :
+_PUART_LABEL
+]#
+definition PUART_waitTransmitFlag
+    label _PUART_LABEL
+    do _bread2 & 0x02
+    if_not _result
+        jump _PUART_LABEL
+    end
+    
+    unset _PUART_LABEL
+end_def
+
+#Check if the receive flag is 1
+definition PUART_checkReceiveFlag
+    do _bread2 & 0x01
+end_def
+
+#Macro to access the received byte
+set PUART_receive _bread1
+
+#Send a buffer
+#[ variable argument
+
+Size to be sent (1 to 256) :
+$size:PUART_POOL
+
+MSB address (fixed) :
+0x00
+
+LSB address :
+$addressLSB:PUART_POOL
+]#
+function PUART_sendBuffer
+    affect $counter:PUART_POOL 0
+    
+    label PUART_sendBuffer_loop
+    
+    get $addressLSB:PUART_POOL
+    brut 0x8B 0x00 #BRAMADD1_CLK <RAMVALUE>
+    brut 0x0C 0x00 #BRAMADD2_CLK <SRCVALUE>
+    
+    set _PUART_VALUE _ram
+    call PUART_setTransmitBuffer
+    call PUART_send
+    
+    set _PUART_LABEL PUART_sendBuffer_waitLoop
+    call PUART_waitTransmitFlag
+    call PUART_clearTransmitFlag
+    
+    do $counter:PUART_POOL + 1
+    affect $counter:PUART_POOL _result
+
+    do $counter:PUART_POOL == $size:PUART_POOL
+    if_not _result
+        do $addressLSB:PUART_POOL + 1
+        affect $addressLSB:PUART_POOL _result
+        
+        jump PUART_sendBuffer_loop
+    end
+
+    jump _LIB_PUART_RET0 _LIB_PUART_RET1 _LIB_PUART_RET2
+end
