@@ -93,9 +93,9 @@ function MINT_8to16_u_add
     do _result 127
     select OP >
     
-    affect $_MINT_OUT_16:MINT_POOL _result 0
-    do $_MINT_8_A:MINT_POOL + $_MINT_8_B:MINT_POOL
     affect $_MINT_OUT_16:MINT_POOL _result 1
+    do $_MINT_8_A:MINT_POOL + $_MINT_8_B:MINT_POOL
+    affect $_MINT_OUT_16:MINT_POOL _result 0
     
     jump $_MINT_RET_A_LSB:MINT_POOL $_MINT_RET_A:MINT_POOL $_MINT_RET_A_MSB:MINT_POOL
 end
