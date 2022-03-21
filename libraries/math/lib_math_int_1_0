@@ -135,14 +135,16 @@ function MINT_16to32_u_add
     ##getting c_lsb
     
     #(a_lsb>>1)
-    do $_MINT_16_A:MINT_POOL >> 1
+    get $_MINT_16_A:MINT_POOL 0
+    do _ram >> 1
     #store result in accumulator left
     write BOPLEFT _result
     select OP A_OPL
     write BOPLEFT _result
     
     #(b_lsb>>1)
-    do $_MINT_16_B:MINT_POOL >> 1
+    get $_MINT_16_B:MINT_POOL 0
+    do _ram >> 1
     #store result in operator right
     write BOPRIGHT _result
     
@@ -179,9 +181,11 @@ function MINT_16to32_u_add
     select OP A_OPR
     write BOPRIGHT _result
     
+    #a_lsb+b_lsb
     #writing first byte of the 4
     do $_MINT_16_A:MINT_POOL + $_MINT_16_B:MINT_POOL
-    affect $_MINT_OUT_32:MINT_POOL _result
+    get $_MINT_OUT_32:MINT_POOL 0
+    affect _result
     
     ##getting c_msb
     
@@ -200,6 +204,7 @@ function MINT_16to32_u_add
     
     #(a_msb&b_msb)
     select OP &
+    get $_MINT_16_B:MINT_POOL 1
     do BOPRIGHT _ram
     get $_MINT_16_A:MINT_POOL 1
     do BOPLEFT _ram
@@ -223,7 +228,7 @@ function MINT_16to32_u_add
     select OP OP_AR
     write BOPRIGHT _result
     select OP &
-    do BOPLEFT _ram
+    write BOPLEFT _ram
     
     #store result in operation right
     write BOPRIGHT _result
@@ -292,10 +297,10 @@ function MINT_16to32_u_add
     get $_MINT_16_A:MINT_POOL 1
     write BOPRIGHT _ram
     select OP +
-    write BOPRIGHT _result
-    #store accumulator right into operator left
-    select OP OP_AR
     write BOPLEFT _result
+    #store accumulator right into operator right
+    select OP OP_AR
+    write BOPRIGHT _result
     select OP +
     
     #writing second byte of the 4
@@ -303,6 +308,7 @@ function MINT_16to32_u_add
     affect _result
     
     #writing fourth byte of the 4
+    #TODO: maybe just don't write 0 ? And let user clean that ?
     get $_MINT_OUT_32:MINT_POOL 3
     affect 0x00
     

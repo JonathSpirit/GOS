@@ -89,11 +89,11 @@ end_def
 var $test_a 2
 
 get $test_a 0
-affect 0
+affect 0x08
 get $test_a 1
-affect 0
+affect 0xFF
 get $_MINT_16_B:MINT_POOL 0
-affect 1
+affect 9  # <- we will do +9 every time, can be changed
 get $_MINT_16_B:MINT_POOL 1
 affect 0
 
@@ -109,6 +109,7 @@ affect 0
 label loop
 
 #Placing test_a into _MINT_16_A:MINT_POOL
+select OP OP_AL #<- make sure we are not writing on accumulator
 get $test_a 0
 write BOPLEFT _ram
 get $test_a 1
@@ -121,40 +122,62 @@ select OP A_OPR
 affect _result
 
 #Printing number
+get $_MINT_OUT_32:MINT_POOL 3
+do _ram >> 4
+call SendResultInHex
+set _PUART_LABEL "_transmit1"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 3
+do _ram & 0x0F
+call SendResultInHex
+set _PUART_LABEL "_transmit2"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 2
+do _ram >> 4
+call SendResultInHex
+set _PUART_LABEL "_transmit3"
+call PUART_waitTransmitFlag
+get $_MINT_OUT_32:MINT_POOL 2
+do _ram & 0x0F
+call SendResultInHex
+set _PUART_LABEL "_transmit4"
+call PUART_waitTransmitFlag
 get $_MINT_OUT_32:MINT_POOL 1
 do _ram >> 4
 call SendResultInHex
-set _PUART_LABEL "_super1"
+set _PUART_LABEL "_transmit5"
 call PUART_waitTransmitFlag
 get $_MINT_OUT_32:MINT_POOL 1
 do _ram & 0x0F
 call SendResultInHex
-set _PUART_LABEL "_super2"
+set _PUART_LABEL "_transmit6"
 call PUART_waitTransmitFlag
 get $_MINT_OUT_32:MINT_POOL 0
 do _ram >> 4
 call SendResultInHex
-set _PUART_LABEL "_super3"
+set _PUART_LABEL "_transmit7"
 call PUART_waitTransmitFlag
 get $_MINT_OUT_32:MINT_POOL 0
 do _ram & 0x0F
 call SendResultInHex
-set _PUART_LABEL "_super4"
+set _PUART_LABEL "_transmit8"
 call PUART_waitTransmitFlag
 
+#Printing \n\r
 set _PUART_VALUE 10
 call PUART_setBufferAndSend
-set _PUART_LABEL "_super5"
+set _PUART_LABEL "_transmit9"
 call PUART_waitTransmitFlag
 set _PUART_VALUE 13
 call PUART_setBufferAndSend
-set _PUART_LABEL "_super6"
+set _PUART_LABEL "_transmit10"
 call PUART_waitTransmitFlag
 
 #Addition
 call MINT_16to32_u_add $_MINT_RET_A_LSB:MINT_POOL $_MINT_RET_A:MINT_POOL $_MINT_RET_A_MSB:MINT_POOL
 
 #Placing result into test_a
+select OP OP_AL #<- make sure we are not writing on accumulator
 get $_MINT_OUT_32:MINT_POOL 0
 write BOPLEFT _ram
 get $_MINT_OUT_32:MINT_POOL 1
