@@ -89,9 +89,9 @@ end_def
 var $test_a 2
 
 get $test_a 0
-affect 0x08
+affect 0
 get $test_a 1
-affect 0xFF
+affect 0
 get $_MINT_16_B:MINT_POOL 0
 affect 9  # <- we will do +9 every time, can be changed
 get $_MINT_16_B:MINT_POOL 1

@@ -205,9 +205,9 @@ function MINT_16to32_u_add
     #(a_msb&b_msb)
     select OP &
     get $_MINT_16_B:MINT_POOL 1
-    do BOPRIGHT _ram
+    write BOPRIGHT _ram
     get $_MINT_16_A:MINT_POOL 1
-    do BOPLEFT _ram
+    write BOPLEFT _ram
     
     #store result in operation right
     write BOPRIGHT _result
