@@ -47,54 +47,25 @@ Output value (2bytes) :
 _MINT_OUT_16
 
 C equivalent :
-    uint8_t c;
-    c = (a>>1) + (b>>1) + (a&b&0x01);
-    return static_cast<uint16_t>(static_cast<uint8_t>(a+b)) | (c>127?0x0100:0x0000);
+    uint16_t c;
+    c = static_cast<uint8_t>(a+b)<a ? 0x0100 : 0x0000;
+    return static_cast<uint16_t>(static_cast<uint8_t>(a+b)) | c;
 ]#
 function MINT_8to16_u_add
-    #(a>>1)
-    do $_MINT_8_A:MINT_POOL >> 1
-    #store result in accumulator left
-    write BOPLEFT _result
-    select OP A_OPL
-    write BOPLEFT _result
-    
-    #(b>>1)
-    do $_MINT_8_B:MINT_POOL >> 1
-    #store result in operator right
-    write BOPRIGHT _result
-    
-    #store accumulator left into operator left
-    select OP OP_AL
-    write BOPLEFT _result
-    
-    #(a>>1) + (b>>1)
-    select OP +
-    #store result in accumulator left
-    write BOPLEFT _result
-    select OP A_OPL
-    write BOPLEFT _result
-    
-    #(a&b&0x01)
-    do $_MINT_8_A:MINT_POOL & $_MINT_8_B:MINT_POOL
-    do _result 0x01
-    
-    #store result in operator right
-    write BOPRIGHT _result
-    
-    #store accumulator left into operator left
-    select OP OP_AL
-    write BOPLEFT _result
-    
-    #(a>>1) + (b>>1) + (a&b&0x01)
-    select OP +
-    
-    #(c>127?0x0100:0x0000)
-    do _result 127
-    select OP >
-    
-    affect $_MINT_OUT_16:MINT_POOL _result 1
+    #(a+b)
     do $_MINT_8_A:MINT_POOL + $_MINT_8_B:MINT_POOL
+    #store result in accumulator left
+    write BOPLEFT _result
+    select OP A_OPL
+    write BOPLEFT _result
+    
+    #(a+b)<a
+    select OP <
+    write BOPRIGHT $_MINT_8_A:MINT_POOL
+    
+    #assembling result
+    affect $_MINT_OUT_16:MINT_POOL _result 1
+    select OP A_OPL
     affect $_MINT_OUT_16:MINT_POOL _result 0
     
     jump $_MINT_RET_A_LSB:MINT_POOL $_MINT_RET_A:MINT_POOL $_MINT_RET_A_MSB:MINT_POOL
