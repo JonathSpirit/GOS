@@ -54,12 +54,9 @@ C equivalent :
 function MINT_8to16_u_add
     #(a+b)
     do $_MINT_8_B:MINT_POOL + $_MINT_8_A:MINT_POOL
-    #store result in accumulator left
-    write BOPLEFT _result
-    select OP A_OPL
-    write BOPLEFT _result
     
     #(a+b)<a
+    write BOPLEFT _result
     select OP <
     write BOPRIGHT _ram
     
@@ -111,12 +108,9 @@ function MINT_16to32_u_add
     write BOPRIGHT _ram
     get $_MINT_16_A:MINT_POOL 0
     write BOPLEFT _ram
-    #store result in accumulator left
-    write BOPLEFT _result
-    select OP A_OPL
-    write BOPLEFT _result
-    
+
     #(a_lsb+b_lsb)<a_lsb
+    write BOPLEFT _result
     select OP <
     write BOPRIGHT _ram
     #store result in accumulator right
