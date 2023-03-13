@@ -1,0 +1,23 @@
+#GCM V5.x Peripherals
+#https://github.com/JonathSpirit/GCM
+
+set PSLOT_0 0x00
+set PSLOT_1 0x01
+set PSLOT_2 0x02
+set PSLOT_3 0x03
+
+set PMEM_CTRL 0x04
+set PSRC_CTRL 0x05
+
+set PCLK_CTRL 0x06
+set PPCLK_CTRL 0x07
+
+#GP8B V5.x writable bus
+#https://github.com/JonathSpirit/GP8B
+
+set BWRITE1 0x01
+set BWRITE2 0x02
+set BSPICFG 0x03
+set BSPI    0x04
+set BOPLEFT  0x05
+set BOPRIGHT 0x06

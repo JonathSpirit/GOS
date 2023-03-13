@@ -1,0 +1,104 @@
+#############################################################################
+# Library for the memory user control integrated peripheral of GCM_5.x V1.0 #
+# Revision 0                                                                #
+#                                                                           #
+# The GCM board have 2 memory source slots, when executing code             #
+# from one of the slot, you can read/write data to the other one.           #
+#                                                                           #
+# In order to do that you have to control some bits in the integrated       #
+# peripheral.                                                               #
+#                                                                           #
+# Created by Guillaume Guillet                                              #
+# 13.03.2023                                                                #
+#############################################################################
+
+#[ Changelog
+
+Revision 0 :
+    - initial release
+]#
+
+set _LIB_MEMUSER_SLOT 0x04
+set _LIB_MEMUSER_BUS_CONTROL BWRITE1
+set _LIB_MEMUSER_BUS_DATA BWRITE2
+set _LIB_MEMUSER_BUS_ADDRESS BWRITE2
+
+#Select the memuser peripheral
+definition MEMUSER_select
+    select P _LIB_MEMUSER_SLOT
+end_def
+
+#Init the control register to this configuration :
+# CE=1, ~WE=1, ~OE=0, ADDRESS_CLK_0=0, ADDRESS_CLK_1=0, ADDRESS_CLK_2=0
+definition MEMUSER_init
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000011
+    clock P
+end_def
+
+#Set the address byte 0 (LSB)
+#[ 'set' argument
+
+Value to write :
+_MEMUSER_ADDRESS_8
+]#
+definition MEMUSER_setAddress_0
+    write _LIB_MEMUSER_BUS_ADDRESS _MEMUSER_ADDRESS_8
+    write _LIB_MEMUSER_BUS_CONTROL 0b00001011
+    clock P
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000011
+    clock P
+    
+    unset _MEMUSER_ADDRESS_8
+end_def
+
+#Set the address byte 1
+#[ 'set' argument
+
+Value to write :
+_MEMUSER_ADDRESS_8
+]#
+definition MEMUSER_setAddress_1
+    write _LIB_MEMUSER_BUS_ADDRESS _MEMUSER_ADDRESS_8
+    write _LIB_MEMUSER_BUS_CONTROL 0b00010011
+    clock P
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000011
+    clock P
+    
+    unset _MEMUSER_ADDRESS_8
+end_def
+
+#Set the address byte 2 (MSB)
+#[ 'set' argument
+
+Value to write :
+_MEMUSER_ADDRESS_8
+]#
+definition MEMUSER_setAddress_2
+    write _LIB_MEMUSER_BUS_ADDRESS _MEMUSER_ADDRESS_8
+    write _LIB_MEMUSER_BUS_CONTROL 0b00100011
+    clock P
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000011
+    clock P
+    
+    unset _MEMUSER_ADDRESS_8
+end_def
+
+#Write to the actual address some data
+#[ 'set' argument
+
+Value to write :
+_MEMUSER_DATA_8
+]#
+definition MEMUSER_write
+    write _LIB_MEMUSER_BUS_DATA _MEMUSER_DATA_8
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000111 #~OE=1
+    clock P
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000101 #~WE=0
+    clock P
+    write _LIB_MEMUSER_BUS_CONTROL 0b00000011
+    clock P
+    
+    unset _MEMUSER_DATA_8
+end_def
+
+

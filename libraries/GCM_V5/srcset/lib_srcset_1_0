@@ -1,0 +1,44 @@
+####################################################################
+# Library for the srcset integrated peripheral of GCM_5.x V1.0     #
+# Revision 0                                                       #
+#                                                                  #
+# srcset allow you to change the readable code memory source while #
+# running, for example you can have 2 programs, one is inside a    #
+# EEPROM memory plugged at slot 0 and one in the slot 1.           #
+# You will be able to switch between the two.                      #
+#                                                                  #
+# When switching, the board reset and the program counter go to 0. #
+# A plugged RAM will always be available so you can share some     #
+# memory between the two programs                                  #
+#                                                                  #
+# Created by Guillaume Guillet                                     #
+# 13.03.2023                                                       #
+####################################################################
+
+#[ Changelog
+
+Revision 0 :
+    - initial release
+]#
+
+set _LIB_SRCSET_SLOT 0x05
+set _LIB_SRCSET_SRC0 0x00
+set _LIB_SRCSET_SRC1 0x01
+
+#Select the srcset peripheral
+definition SRCSET_select
+    select P _LIB_SRCSET_SLOT
+end_def
+
+#Switch to the source memory 0
+definition SRCSET_switchToSource0
+    write BWRITE1 _LIB_SRCSET_SRC0
+    clock P
+end_def
+
+#Switch to the source memory 1
+definition SRCSET_switchToSource1
+    write BWRITE1 _LIB_SRCSET_SRC1
+    clock P
+end_def
+

@@ -1,0 +1,66 @@
+import libraries/ALUminium_model
+import libraries/common_model
+
+import libraries/GCM_V5/srcset/lib_srcset_1_0
+import libraries/GCM_V5/memuser/lib_memuser_1_0
+
+pool SharedDataPool 200 0 #Creating a shared pool that reserve address 0..49
+pool SharedPool 10 200
+ 
+var $ArgStartAddress:SharedPool 3
+var $ArgCount:SharedPool
+var $WriteAddressLSB:SharedPool
+
+#MemoryReaderCode
+call MEMUSER_select
+call MEMUSER_init
+
+#init
+get $ArgStartAddress:SharedPool 0
+set _MEMUSER_ADDRESS_8 _ram
+call MEMUSER_setAddress_0
+get $ArgStartAddress:SharedPool 1
+set _MEMUSER_ADDRESS_8 _ram
+call MEMUSER_setAddress_1
+get $ArgStartAddress:SharedPool 2
+set _MEMUSER_ADDRESS_8 _ram
+call MEMUSER_setAddress_2
+
+affect $WriteAddressLSB:SharedPool 0
+
+label MemoryReaderCode_loop
+
+#store WriteAddressLSB into accumulator left
+get $WriteAddressLSB:SharedPool
+select OP A_OPL
+write BOPLEFT _ram
+select OP OP_AL
+
+#prepare write address
+get SharedDataPool 0
+brut 0x6B #OPCODE_BRAMADD1_CLK(0x0B) | READABLE_RESULT(0x60)
+
+#writing data
+affect _bread1
+
+#increasing address
+do $WriteAddressLSB:SharedPool + 1
+
+#check count
+do _result $ArgCount:SharedPool
+select OP ==
+if _result
+    #we are good, we can re-switch memory source
+    call SRCSET_select
+    call SRCSET_switchToSource0
+    #the program will not continue as switching source cause auto reset
+end
+
+#go to the next memory address
+get $ArgStartAddress:SharedPool 0
+do _ram + $WriteAddressLSB:SharedPool
+set _MEMUSER_ADDRESS_8 _result
+call MEMUSER_setAddress_0
+
+jump MemoryReaderCode_loop
+#END
