@@ -4,7 +4,7 @@ import libraries/common_model
 import libraries/GCM_V5/srcset/lib_srcset_1_0
 import libraries/GCM_V5/memuser/lib_memuser_1_0
 
-pool SharedDataPool 200 0 #Creating a shared pool that reserve address 0..49
+pool SharedDataPool 200 0 #Creating a shared pool that reserve address 0..199
 pool SharedPool 10 200
  
 var $ArgStartAddress:SharedPool 3

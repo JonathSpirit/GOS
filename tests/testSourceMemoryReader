@@ -4,26 +4,74 @@ import ../libraries/common_model
 import ../libraries/GCM_V5/srcset/lib_srcset_1_0
 import ../libraries/GCM_V5/memuser/lib_memuser_1_0
 
-pool SharedDataPool 200 0 #Creating a shared pool that reserve address 0..49
+pool SharedDataPool 200 0 #Creating a shared pool that reserve address 0..199
 pool SharedPool 10 200
-pool MemoryReaderCodePool 0xFF 0x100
- 
+pool MemoryReaderCodePool 0xFF 0x100 #Here we reserve some RAM space for the complete MemoryReader code
+
 var $ArgStartAddress:SharedPool 3
 var $ArgCount:SharedPool
 var $WriteAddressLSB:SharedPool
 
+var $MagicByteStat:SharedPool #This byte is usefull in order to know to stat of the code after future reset
+
+var $JumpAddress0
+var $JumpAddress1
+var $JumpAddress2
+var $WriteCount
+
 affect MemoryReaderCodePool 0 @file_brut:sourceMemoryReader.cg@
 
-function WriteMemoryReaderCodeToMemory
+function WriteMemoryReaderCodeToUserMemory
+    call MEMUSER_select
+    call MEMUSER_init
     
+    set _MEMUSER_ADDRESS_8 0x00
+    call MEMUSER_setAddress_0
+    set _MEMUSER_ADDRESS_8 0x00
+    call MEMUSER_setAddress_1
+    set _MEMUSER_ADDRESS_8 0x00
+    call MEMUSER_setAddress_2
+    affect $WriteCount 0
+    
+    label WriteMemoryReaderCodeToUserMemory_loop
+    
+    #Place WriteCount to accumulator left
+    get $WriteCount
+    select OP A_OPL
+    write BOPLEFT _ram
+    
+    #Place accumulator left to ram address LSB
+    select OP OP_AL
+    brut 0x6B #OPCODE_BRAMADD1_CLK | READABLE_RESULT
+    brut 0x0C 0x01 #OPCODE_BRAMADD2_CLK | READABLE_SOURCE
+    
+    #We write the byte to the user memory
+    set _MEMUSER_ADDRESS_8 _result
+    call MEMUSER_setAddress_0
+    set _MEMUSER_DATA_8 _ram
+    call MEMUSER_write
+    
+    #Increment WriteCount and check the loop
+    do $WriteCount + 1
+    do _result 115 #<- this is the size in bytes of the compiled MemoryReader code
+    select OP ==
+    if_not _result
+        select OP A_OPL #Small optimization in order to avoid doing that again: "do $WriteCount + 1"
+        affect $WriteCount _result
+        jump WriteMemoryReaderCodeToUserMemory_loop
+    end
+    
+    #We finished
+    jump $JumpAddress0 $JumpAddress1 $JumpAddress2
+end
+
+do $MagicByteStat:SharedPool == 44
+if_not _result
+    #We are in a undefined stat so we write the function to user memory
+    call WriteMemoryReaderCodeToUserMemory $JumpAddress0 $JumpAddress1 $JumpAddress2
+    affect $MagicByteStat:SharedPool 44
 end
 
 label main
-
-call MEMUSER_select
-call MEMUSER_init
-
-set _MEMUSER_DATA_8 0x00
-call MEMUSER_write
 
 jump main
