@@ -21,6 +21,12 @@ var $WriteCount
 
 affect MemoryReaderCodePool 0 @file_brut:sourceMemoryReader.cg@
 
+set _LIB_PUART_SLOT 0
+set _LIB_PUART_RET0 $JumpAddress0
+set _LIB_PUART_RET1 $JumpAddress1
+set _LIB_PUART_RET2 $JumpAddress2
+import ../libraries/peripherals/uart/lib_puart_A1_1
+
 function WriteMemoryReaderCodeToUserMemory
     call MEMUSER_select
     call MEMUSER_init
@@ -53,7 +59,7 @@ function WriteMemoryReaderCodeToUserMemory
     
     #Increment WriteCount and check the loop
     do $WriteCount + 1
-    do _result 115 #<- this is the size in bytes of the compiled MemoryReader code
+    do _result 116 #<- this is the size in bytes of the compiled MemoryReader code
     select OP ==
     if_not _result
         select OP A_OPL #Small optimization in order to avoid doing that again: "do $WriteCount + 1"
@@ -70,8 +76,31 @@ if_not _result
     #We are in a undefined stat so we write the function to user memory
     call WriteMemoryReaderCodeToUserMemory $JumpAddress0 $JumpAddress1 $JumpAddress2
     affect $MagicByteStat:SharedPool 44
+    
+    #Then we prepare arguments for the MemoryReaderCode that is now inside the second memory
+    affect $ArgStartAddress:SharedPool 0 0x00
+    affect $ArgStartAddress:SharedPool 1 0x05
+    affect $ArgStartAddress:SharedPool 2 0x00
+    affect $ArgCount:SharedPool 13
+    
+    #Now we switch source and the MemoryReaderCode should read data inside the first memory and
+    #put it inside pool SharedDataPool
+    
+    call SRCSET_select
+    call SRCSET_switchToSource1
+    #the program will not continue as switching source cause auto reset
 end
+
+call PUART_chooseUART
+call PUART_clearFlags
 
 label main
 
+affect $size:PUART_POOL 13
+affect $addressLSB:PUART_POOL 0
+call PUART_sendBuffer $JumpAddress0 $JumpAddress1 $JumpAddress2
+
 jump main
+
+offset reach 0x500 #Goto a only data memory zone
+brut 'H' 'e' 'l' 'l' 'o' ' ' 'W' 'o' 'r' 'l' 'd' '!' '\n'

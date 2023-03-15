@@ -45,6 +45,7 @@ affect _bread1
 
 #increasing address
 do $WriteAddressLSB:SharedPool + 1
+affect _result
 
 #check count
 do _result $ArgCount:SharedPool
