@@ -78,9 +78,9 @@ if_not _result
     affect $MagicByteStat:SharedPool 44
     
     #Then we prepare arguments for the MemoryReaderCode that is now inside the second memory
-    affect $ArgStartAddress:SharedPool 0 0x00
-    affect $ArgStartAddress:SharedPool 1 0x05
-    affect $ArgStartAddress:SharedPool 2 0x00
+    affect $ArgStartAddress:SharedPool 0x00 0
+    affect $ArgStartAddress:SharedPool 0x05 1
+    affect $ArgStartAddress:SharedPool 0x00 2
     affect $ArgCount:SharedPool 13
     
     #Now we switch source and the MemoryReaderCode should read data inside the first memory and
